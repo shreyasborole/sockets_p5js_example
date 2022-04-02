@@ -1,19 +1,23 @@
-const express = require('express');
-const app = express();
-const server = app.listen(3000);
+const http = require('http')
+const express = require('express')
 
-app.use(express.static('public'));
+const port = 3000;
 
-var socket = require('socket.io');
-var io = socket(server);
+const app = express()
+app.use(express.static('public'))
 
-io.on('connection', newConnection);
+app.set('port', `${port}`)
 
-function newConnection(socket){
-    console.log('New connection: ' + socket.id);
-    socket.on('mouse', mouseMsg);
+const server = http.createServer(app)
+server.on('listening', () => {
+    console.log(`Listening on: http://localhost:${port}`)
+})
 
-    function mouseMsg(data){
-        socket.broadcast.emit('mouse', data);
-    }
-}
+server.listen('3000')
+
+const io = require('socket.io')(server)
+io.sockets.on('connection', (socket) => {
+    console.log(`Client connected id(${socket.id})`);
+    socket.on('mouse', (data) => socket.broadcast.emit('mouse', data));
+    socket.on('disconnect', () => console.log(`Client disconnected id(${socket.id})`))
+});
